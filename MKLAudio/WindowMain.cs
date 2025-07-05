@@ -33,8 +33,10 @@ namespace MKLAudio
 			this.StartPosition = FormStartPosition.Manual;
 			this.Location = new Point(0, 0);
 
+			// Set app icon
+			this.Icon = new Icon(Path.Combine(this.Repopath, "Resources", "dynamicl.ico"));
+
 			this.AudioH = new AudioHandling(this.Repopath, this.listBox_log, this.listBox_tracks, this.pictureBox_wave, this.button_play, this.textBox_time, this.label_meta, this.hScrollBar_offset, this.vScrollBar_volume, this.numericUpDown_zoom);
-			//this.ImageH = new ImageHandling(this.Repopath, this.listBox_images, this.pictureBox_image, this.numericUpDown_zoomImage, this.label_imageMeta);
 
 			this.Service = new OpenClService(this.Repopath, this.listBox_log, this.comboBox_devices);
 			this.Cuda = new CudaService(this.Repopath, this.listBox_log, this.comboBox_cudaDevices, this.progressBar_batch);

@@ -1742,7 +1742,7 @@ namespace MKLAudio
 
 		public string GetMetaString()
 		{
-			return $"Name: {this.Name}, Samplerate: {this.Samplerate}, Bitdepth: {this.Bitdepth}, Channels: {this.Channels}, Length: {(this.Length / 3 / 1024):N0} KBytes, BPM: {this.Bpm}, <{this.Pointer.ToString("X16")}>";
+			return $"{this.Samplerate / 1000f} kHz, {this.Channels} ch., {this.Bitdepth}-bit, {this.Length} floats, {this.Bpm:F5} BPM";
 		}
 	}
 
