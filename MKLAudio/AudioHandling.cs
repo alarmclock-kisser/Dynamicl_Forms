@@ -269,7 +269,7 @@ namespace MKLAudio
 			using OpenFileDialog ofd = new()
 			{
 				// InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic),
-				InitialDirectory = "D:\\Musik\\MKL_Input\\",
+				// InitialDirectory = "D:\\Musik\\MKL_Input\\",
 				Filter = "Audio Files|*.mp3;*.wav;*.flac;*.aac|All Files|*.*",
 				Multiselect = false,
 				RestoreDirectory = true
@@ -1624,7 +1624,7 @@ namespace MKLAudio
 				using SaveFileDialog sfd = new();
 				sfd.Title = "Export audio file";
 				// sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
-				sfd.InitialDirectory = "D:\\Musik\\MKL_Output\\";
+				// sfd.InitialDirectory = "D:\\Musik\\MKL_Output\\";
 				sfd.Filter = "Wave files (*.wav)|*.wav|MP3 files (*.mp3)|*.mp3";
 				sfd.OverwritePrompt = true;
 				sfd.FileName = baseFileName + ".wav"; // Standard Dateiname mit Extension
