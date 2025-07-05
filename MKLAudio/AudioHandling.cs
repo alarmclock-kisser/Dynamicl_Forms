@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Globalization;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace MKLAudio
@@ -841,27 +842,38 @@ namespace MKLAudio
 
 			// Read bpm metadata if available
 			float bpm = 0.0f;
-
 			try
 			{
 				if (!string.IsNullOrEmpty(this.Filepath) && File.Exists(this.Filepath))
 				{
 					using (var file = TagLib.File.Create(this.Filepath))
 					{
-						// Check for BPM in standard ID3v2 tag
 						if (file.Tag.BeatsPerMinute > 0)
 						{
 							bpm = (float) file.Tag.BeatsPerMinute;
 						}
-						// Alternative für spezielle Tags (z.B. TBPM Frame)
-						else if (file.TagTypes.HasFlag(TagLib.TagTypes.Id3v2))
+						if (file.TagTypes.HasFlag(TagLib.TagTypes.Id3v2))
 						{
 							var id3v2Tag = (TagLib.Id3v2.Tag) file.GetTag(TagLib.TagTypes.Id3v2);
-							var bpmFrame = TagLib.Id3v2.UserTextInformationFrame.Get(id3v2Tag, "BPM", false);
 
-							if (bpmFrame != null && float.TryParse(bpmFrame.Text.FirstOrDefault(), out float parsedBpm))
+							var tbpmTextFrame = TagLib.Id3v2.TextInformationFrame.Get(id3v2Tag, "TBPM", false);
+
+							if (tbpmTextFrame != null && tbpmTextFrame.Text.Any())
 							{
-								bpm = parsedBpm;
+								string bpmString = tbpmTextFrame.Text.FirstOrDefault() ?? "0,0";
+								if (!string.IsNullOrEmpty(bpmString))
+								{
+									bpmString = bpmString.Replace(',', '.');
+
+									if (float.TryParse(bpmString, NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedBpmFromTbpm))
+									{
+										bpm = parsedBpmFromTbpm;
+									}
+								}
+							}
+							else
+							{
+								bpm = 0.0f;
 							}
 						}
 					}
@@ -871,7 +883,8 @@ namespace MKLAudio
 			{
 				Debug.WriteLine($"Fehler beim Lesen der BPM: {ex.Message}");
 			}
-			this.Bpm = bpm > 0 ? bpm / 100.0f : 0.0f;
+
+			this.Bpm = bpm > 0 ? bpm : 0.0f;
 		}
 
 		public byte[] GetBytes()

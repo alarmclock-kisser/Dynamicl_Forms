@@ -1,5 +1,3 @@
-using OpenTK.Graphics.ES11;
-
 namespace MKLAudio
 {
 	public partial class WindowMain : Form
@@ -8,8 +6,6 @@ namespace MKLAudio
 		public string Repopath;
 
 		public AudioHandling AudioH;
-		//public ImageHandling ImageH;
-		//public VideoHandling VideoH;
 
 		public OpenClService Service;
 		public CudaService Cuda;
@@ -43,22 +39,15 @@ namespace MKLAudio
 			this.Service = new OpenClService(this.Repopath, this.listBox_log, this.comboBox_devices);
 			this.Cuda = new CudaService(this.Repopath, this.listBox_log, this.comboBox_cudaDevices, this.progressBar_batch);
 
-			//this.VideoH = new VideoHandling(this.Repopath, this.AudioH, this.ImageH, this.Service);
-
 			this.Service.SelectDeviceLike("Core");
-			//this.Cuda.SelectDeviceLike("RTX");
+			this.Cuda.SelectDeviceLike("RTX");
 
 			this.Service.KernelCompiler?.FillGenericKernelNamesCombobox(this.comboBox_kernelNames);
 			this.Service.FillSpecificKernels(this.comboBox_kernelsStretch, "timestretch");
-			//this.Service.FillSpecificKernels(this.comboBox_kernelBeatScan, "beatscan");
 
 			// Register events
 			this.RegisterNumericToSecondPow(this.numericUpDown_chunkSize);
 			this.listBox_log.DoubleClick += (s, e) => this.CopyLogLineToClipboard(this.listBox_log.SelectedIndex);
-
-			// Load resources
-			//this.AudioH.LoadResourcesAudios();
-			//this.ImageH.LoadResourcesImages();
 
 			// Select latest stretch kernel
 			this.Service.SelectLatestKernel(this.comboBox_kernelsStretch);
@@ -165,6 +154,8 @@ namespace MKLAudio
 			if (!Directory.Exists(inputDir))
 			{
 				this.label_batchInputFilesCount.Text = "Input Directory does not exist, no files found (0).";
+				Directory.CreateDirectory(inputDir);
+				return;
 			}
 
 			count = Directory.GetFiles(inputDir, "*.*", SearchOption.TopDirectoryOnly)
@@ -258,7 +249,7 @@ namespace MKLAudio
 			{
 				if (this.Cuda.MemoryRegister?.FindMemory(this.AudioH.CurrentTrack.Pointer, true) != null)
 				{
-					this.Cuda.PullAudio(this.AudioH.CurrentTrack, 1.0f, this.checkBox_log.Checked);
+					this.Cuda.PullAudio(this.AudioH.CurrentTrack, this.checkBox_log.Checked);
 				}
 			}
 			else
@@ -529,6 +520,28 @@ namespace MKLAudio
 
 			this.checkBox_cufft.Enabled = true;
 			this.checkBox_cufft.Checked = this.Cuda.Initialized;
+		}
+
+		private void checkBox_cufft_CheckedChanged(object sender, EventArgs e)
+		{
+			// Check Cuda initialized
+			if (!this.Cuda.Initialized)
+			{
+				MessageBox.Show("CUDA is not initialized. Please select a CUDA device first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				this.checkBox_cufft.Checked = false;
+				return;
+			}
+
+			if (this.checkBox_cufft.Checked)
+			{
+				// Set cudaservice in openclservice
+				this.Service.CudaService = this.Cuda;
+			}
+			else
+			{
+				// Reset cudaservice in openclservice
+				this.Service.CudaService = null;
+			}
 		}
 	}
 }

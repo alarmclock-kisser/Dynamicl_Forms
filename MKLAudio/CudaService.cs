@@ -249,7 +249,7 @@ namespace MKLAudio
 			List<string> deviceNames = this.GetDeviceNames(true, true);
 			if (deviceNames.Count == 0)
 			{
-				this.Log("No OpenCL devices found", "Please check your OpenCL installation.", 1);
+				this.Log("No CUDA devices found", "Please check your OpenCL installation.", 1);
 				return;
 			}
 
@@ -269,7 +269,7 @@ namespace MKLAudio
 			}
 			else
 			{
-				this.Log("OpenCL device not found", "No device found with name like '" + deviceNameWildcard + "'");
+				this.Log("CUDA device not found", "No device found with name like '" + deviceNameWildcard + "'");
 			}
 		}
 
@@ -321,7 +321,7 @@ namespace MKLAudio
 			return obj.Pointer;
 		}
 
-		public IntPtr PullAudio(AudioObject obj, float stretchFactor = 1.0f, bool log = false)
+		public IntPtr PullAudio(AudioObject obj, bool log = false)
 		{
 			if (obj == null || obj.Pointer == IntPtr.Zero)
 			{
@@ -348,7 +348,7 @@ namespace MKLAudio
 			}
 			else
 			{
-				obj.AggregateStretchedChunks(this.MemoryRegister?.PullChunks<float>(obj.Pointer, true,  log) ?? [], stretchFactor);
+				obj.AggregateChunks(this.MemoryRegister?.PullChunks<float>(obj.Pointer, true,  log) ?? []);
 			}
 
 			if (obj.Data == null || obj.Data.Length == 0)
@@ -370,7 +370,7 @@ namespace MKLAudio
 			return obj.Pointer; // Return the pointer of the memory object
 		}
 
-		public void PerformFFT(AudioObject obj, int chunkSize = 4196, float overlap = 0.5f, bool log = false)
+		public void PerformFFT(AudioObject obj, int chunkSize = 16384, float overlap = 0.5f, bool log = false)
 		{
 			// check initialized
 			if (this.FourierHandling == null)

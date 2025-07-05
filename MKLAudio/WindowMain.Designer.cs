@@ -374,6 +374,7 @@
 			this.checkBox_cufft.TabIndex = 45;
 			this.checkBox_cufft.Text = "CuFFT?";
 			this.checkBox_cufft.UseVisualStyleBackColor = true;
+			this.checkBox_cufft.CheckedChanged += this.checkBox_cufft_CheckedChanged;
 			// 
 			// textBox_batchInputPath
 			// 

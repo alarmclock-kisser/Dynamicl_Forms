@@ -18,6 +18,8 @@ namespace MKLAudio
 		public OpenClKernelCompiler? KernelCompiler;
 		public OpenClKernelExecutioner? KernelExecutioner;
 
+		public CudaService? CudaService = null;
+
 		public int INDEX = -1;
 		public CLContext? CTX = null;
 		public CLDevice? DEV = null;
