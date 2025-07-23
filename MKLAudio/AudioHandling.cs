@@ -1,4 +1,5 @@
-﻿using NAudio.Wave;
+﻿using NAudio.Lame;
+using NAudio.Wave;
 using OpenTK.Mathematics;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -1594,12 +1595,13 @@ namespace MKLAudio
 			return bitmap;
 		}
 
-
 		public string? Export(string outPath = "")
 		{
 			string baseFileName = $"{this.Name} [{this.Bpm:F1}]"; // Dateiname ohne Extension
 
 			string filePath; // Der finale Pfad zum Speichern
+
+			string extension = ".wav";
 
 			// Prüfen, ob ein gültiger outPath angegeben wurde
 			if (!string.IsNullOrEmpty(outPath) && Directory.Exists(outPath))
@@ -1623,12 +1625,10 @@ namespace MKLAudio
 			{
 				using SaveFileDialog sfd = new();
 				sfd.Title = "Export audio file";
-				// sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
-				// sfd.InitialDirectory = "D:\\Musik\\MKL_Output\\";
+				sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
 				sfd.Filter = "Wave files (*.wav)|*.wav|MP3 files (*.mp3)|*.mp3";
 				sfd.OverwritePrompt = true;
 				sfd.FileName = baseFileName + ".wav"; // Standard Dateiname mit Extension
-				sfd.RestoreDirectory = true;
 
 				if (sfd.ShowDialog() == DialogResult.OK)
 				{
@@ -1638,6 +1638,14 @@ namespace MKLAudio
 				{
 					return null; // Benutzer hat den Dialog abgebrochen
 				}
+
+				extension = Path.GetExtension(filePath).ToLowerInvariant();
+			}
+
+			// IF EXTENSION IS .mp3, CALL EXPORTMP3
+			if (extension == ".mp3")
+			{
+				return this.ExportMp3Async(filePath).Result;
 			}
 
 			// Ab hier beginnt die gemeinsame Logik für beide Fälle (direkt exportieren oder Dialog)
@@ -1660,7 +1668,7 @@ namespace MKLAudio
 						using (var file = TagLib.File.Create(filePath))
 						{
 							// TagLib speichert BPM für MP3 und WAV (als TXXX Frame in RIFF INFO Chunk für WAV)
-							file.Tag.BeatsPerMinute = (uint) (this.Bpm * 100);
+							file.Tag.BeatsPerMinute = (uint)(this.Bpm * 100);
 							file.Save();
 						}
 					}
@@ -1679,6 +1687,81 @@ namespace MKLAudio
 				return null;
 			}
 		}
+
+		public async Task<string?> ExportMp3Async(string? outPath = null, int bitrate = 256)
+		{
+			string baseFileName = $"{this.Name} [{this.Bpm:F1}]";
+
+			string filePath;
+
+			if (!string.IsNullOrEmpty(outPath) && File.Exists(outPath))
+			{
+				if (Path.HasExtension(outPath))
+				{
+					filePath = outPath;
+				}
+				else
+				{
+					filePath = Path.Combine(outPath, baseFileName + ".mp3");
+				}
+			}
+			else
+			{
+				using SaveFileDialog sfd = new();
+				sfd.Title = "Export audio file MP3";
+				sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+				sfd.Filter = "MP3 files (*.mp3)|*.mp3";
+				sfd.OverwritePrompt = true;
+				sfd.FileName = baseFileName + ".mp3";
+
+				if (sfd.ShowDialog() == DialogResult.OK)
+				{
+					filePath = sfd.FileName;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			// Get bytes and wave format for MP3 and bitrate, get blockize reasonably
+			int blockSize = 1152; // Standard MP3 block size
+			byte[] bytes = this.GetBytes();
+			var mp3Format = new Mp3WaveFormat(this.Samplerate, this.Channels, blockSize, bitrate);
+
+			// Write to MP3 file
+			try
+			{
+				using (var fileStream = new FileStream(filePath, FileMode.Create))
+				using (var mp3Writer = new LameMP3FileWriter(fileStream, mp3Format, LAMEPreset.STANDARD))
+				{
+					await mp3Writer.WriteAsync(bytes, 0, bytes.Length);
+				}
+				// Add ID3 tag for BPM
+				if (this.Bpm > 0.0f)
+				{
+					try
+					{
+						using (var file = TagLib.File.Create(filePath))
+						{
+							file.Tag.BeatsPerMinute = (uint)(this.Bpm * 100);
+							file.Save();
+						}
+					}
+					catch (Exception ex)
+					{
+						Debug.WriteLine($"Fehler beim Hinzufügen der BPM-Tags für MP3: {ex.Message}");
+					}
+				}
+				return filePath;
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"Fehler beim Exportieren der MP3-Datei: {ex.Message}");
+				return null;
+			}
+		}
+
 		public void Reload()
 		{
 			// Null pointer

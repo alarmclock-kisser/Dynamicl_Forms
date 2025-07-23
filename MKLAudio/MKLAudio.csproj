@@ -20,6 +20,7 @@
     <PackageReference Include="ManagedCuda-NVJITLINK" Version="12.8.60" />
     <PackageReference Include="ManagedCuda-NVRTC" Version="12.8.60" />
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="NAudio.Lame" Version="2.1.0" />
     <PackageReference Include="OpenTK" Version="4.9.4" />
     <PackageReference Include="OpenTK.Mathematics" Version="4.9.4" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
